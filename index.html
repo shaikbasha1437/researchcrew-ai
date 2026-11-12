@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ResearchCrew AI: a multi-agent research team in your browser</title>
+  <meta name="description" content="A planner, parallel researchers, a writer and a critic that check each other. Every citation is verified against the source quote. Free demo with fictional sources, or bring your own key.">
+  <meta name="theme-color" content="#16243f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <script>try { if (localStorage.getItem('rc.theme') === '"dark"' || (!localStorage.getItem('rc.theme') && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark'); } catch (e) {}</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <a class="brand" href="./" aria-label="ResearchCrew AI home"><img src="icons/icon.svg" alt="" width="28" height="28">ResearchCrew <b>AI</b></a>
+    <nav aria-label="Main">
+      <button type="button" id="nav-library">Library</button>
+      <button type="button" id="nav-sources">Your sources</button>
+      <button type="button" id="nav-history">History</button>
+      <button type="button" id="nav-settings">Settings</button>
+      <button type="button" id="nav-about">About</button>
+      <button type="button" id="nav-theme" aria-label="Toggle dark mode" title="Toggle dark mode">◐</button>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="hero">
+      <p class="eyebrow">MULTI-AGENT RESEARCH TEAM</p>
+      <h1>Planner, researchers, writer and critic, <em>checking each other</em>.</h1>
+      <p class="lede">Ask a research question. The planner splits it into sub-questions, researchers search in parallel and pull exact quotes, the writer drafts a cited report, and the critic sends it back until every claim holds up. Every <code>[n]</code> is checked against the source text.</p>
+      <div class="status-row" id="status-row"></div>
+    </section>
+    <div class="layout">
+      <section class="panel ask" aria-label="Research question">
+        <form id="ask-form" novalidate>
+          <div class="field">
+            <label for="question">Research question</label>
+            <textarea id="question" rows="3" maxlength="600" placeholder="e.g. Has Larkspur’s Pedal Forward e-bike share program worked?"></textarea>
+            <div class="err" id="q-err" role="alert"></div>
+          </div>
+          <div class="samples-wrap"><span class="small muted">Try:</span><div class="samples" id="samples"></div></div>
+          <div class="row2">
+            <div class="field"><label for="audience">Audience</label><select id="audience"><option value="general">General reader</option><option value="executive">Executive</option><option value="technical">Technical</option><option value="student">Student</option></select></div>
+            <div class="field"><label for="length">Length</label><select id="length"><option value="short">Short</option><option value="medium" selected>Medium</option><option value="long">Long</option></select></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="depth">Depth</label><select id="depth"><option value="quick">Quick (3 sub-questions)</option><option value="standard" selected>Standard (5)</option><option value="deep">Deep (6, more notes)</option></select></div>
+            <div class="field"><label for="rounds">Critic rounds (max)</label><select id="rounds"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></div>
+          </div>
+          <div class="opts">
+            <div class="seg" role="group" aria-label="Who does the work"><button type="button" id="mode-demo" aria-pressed="true">Demo team</button><button type="button" id="mode-llm" aria-pressed="false">Your AI</button></div>
+            <label class="inline"><input type="checkbox" id="auto"> Auto-run (skip plan approval)</label>
+            <label class="inline">Speed <select id="speed" aria-label="Demo speed"><option value="slow">Slow</option><option value="normal" selected>Normal</option><option value="fast">Fast</option></select></label>
+          </div>
+          <div class="live-box" id="live-box" hidden></div>
+          <div class="run-row">
+            <button id="run-btn" class="primary" type="submit">▶ Start research</button>
+            <button id="pause-btn" type="button" disabled title="Pause after the current step">❚❚ Pause</button>
+            <button id="step-btn" type="button" disabled title="Run one step, then pause">⏭ Step</button>
+            <button id="resume-btn" type="button" disabled>▶ Resume</button>
+            <button id="stop-btn" class="danger" type="button" disabled>■ Stop</button>
+          </div>
+          <div class="row small-row"><button type="button" id="share-btn" class="small-btn">🔗 Copy share link</button><span class="small muted">Shares the question and settings only, never keys or sources.</span></div>
+        </form>
+      </section>
+      <section class="panel work" aria-label="Agent team">
+        <div class="graph" id="graph" aria-label="Agent graph"></div>
+        <div id="gate"></div>
+        <div class="tabs" role="tablist" id="tabs">
+          <button role="tab" type="button" data-tab="timeline" aria-selected="true">Timeline</button>
+          <button role="tab" type="button" data-tab="plan" aria-selected="false">Plan</button>
+          <button role="tab" type="button" data-tab="notes" aria-selected="false">Notes</button>
+          <button role="tab" type="button" data-tab="drafts" aria-selected="false">Drafts</button>
+          <button role="tab" type="button" data-tab="critique" aria-selected="false">Critique</button>
+          <button role="tab" type="button" data-tab="report" aria-selected="false">Report</button>
+        </div>
+        <div class="tabpanel" id="tabpanel" role="tabpanel" aria-live="polite"></div>
+      </section>
+    </div>
+    <footer class="foot small muted">ResearchCrew AI runs in your browser. Demo sources are fictional (all domains end in .example). Keys stay in this browser and go only to the provider you pick. <a href="https://github.com/shaikbasha1437/researchcrew-ai" rel="noopener">Source on GitHub</a> · MIT license.</footer>
+  </main>
+  <div id="modal-host"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="js/text.js"></script>
+  <script src="js/library.js"></script>
+  <script src="js/guard.js"></script>
+  <script src="js/critic.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/agents.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/sources.js"></script>
+  <script src="js/llm.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/webllm.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+  <script>if ('serviceWorker' in navigator && location.protocol !== 'file:') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
+</body>
+</html>

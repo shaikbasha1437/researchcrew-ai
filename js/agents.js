@@ -77,7 +77,7 @@
   /* o = { call(agent, msg) -> {text, usage, cost, model}, sources(): [], secrets(): [], webSearch?: async (query) => [sources], library? } */
   function llmAgents(o) {
     let pool = []; const extra = new Map(); let topicName = '';
-    const srcMap = () => byIdMap(pool.concat(Array.from(extra.values())));
+    const srcMap = () => byIdMap(((o.known && o.known()) || []).concat((o.sources && o.sources()) || [], pool, Array.from(extra.values())));
     async function ask(agent, msg) {
       const secrets = (o.secrets && o.secrets()) || [];
       G.assertNoSecrets(msg.system + '\n' + msg.messages.map((m) => m.content).join('\n'), secrets);
