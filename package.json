@@ -1,0 +1,8 @@
+{
+  "name": "researchcrew-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A multi-agent research team (planner, parallel researchers, writer, critic) with verified citations, running in the browser.",
+  "license": "MIT",
+  "scripts": { "test": "node --test test/*.test.js" }
+}
