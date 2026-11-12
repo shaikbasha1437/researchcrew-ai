@@ -60,3 +60,16 @@ test('an agent error stops the run with a readable message, and resume retries',
   assert.strictEqual(eng.run.status, 'error'); assert.match(eng.run.error, /key was rejected/);
   await eng.resume(); assert.strictEqual(eng.run.status, 'done');
 });
+test('approving a plan while paused continues the research (the button says "Approve & research")', async () => {
+  const eng = mk({}); eng.start(); await until(eng, (r) => r.status === 'awaiting-approval');
+  eng.pause(); assert.strictEqual(eng.run.status, 'paused');
+  eng.approve(); await until(eng, (r) => r.status === 'done'); assert.ok(eng.run.plan.approved);
+});
+test('approving a reopened (stopped, unapproved) run starts it', async () => {
+  const eng = mk({}); eng.start(); await until(eng, (r) => r.status === 'awaiting-approval'); eng.stop(); await until(eng, (r) => r.status === 'stopped');
+  eng.approve(); await until(eng, (r) => r.status === 'done');
+});
+test('resume right after stop restarts once the stopped step has unwound', async () => {
+  const eng = mk({ autoApprove: true }, { delays: { planner: 5, researcher: 30, writer: 30, critic: 30 } }); eng.start(); await until(eng, (r) => r.step === 'research' || Object.keys(r.research).length > 0);
+  eng.stop(); eng.resume(); await until(eng, (r) => r.status === 'done', 8000); assert.ok(eng.run.critiques[eng.run.critiques.length - 1].pass);
+});

@@ -131,14 +131,15 @@
         if (stepMode) { stepMode = false; paused = true; }
       }
     }
+    function kick() { if (looping) looping.then(() => { if (!['running', 'done'].includes(run.status)) start(); }); else start(); return looping; }
     function start() { if (looping) return looping; stopped = false; run.error = null; looping = loop().finally(() => { looping = null; }); return looping; }
     const api = {
       run, next, start,
       pause() { if (run.status === 'running' || run.status === 'awaiting-approval') { paused = true; if (run.status !== 'running') { run.status = 'paused'; emit(); } msg('you', 'team', 'pause', 'Pause requested; the team stops after the current step.'); emit(); } },
-      resume() { paused = false; stepMode = false; if (run.status === 'stopped' || run.status === 'error' || run.status === 'done') { return start(); } if (wake) wake(); else start(); return looping; },
-      step() { paused = false; stepMode = true; if (run.status === 'awaiting-approval') return looping; if (wake) wake(); else if (!looping) start(); return looping; },
+      resume() { paused = false; stepMode = false; if (run.status === 'stopped' || run.status === 'error' || run.status === 'done') { return kick(); } if (wake) wake(); else kick(); return looping; },
+      step() { paused = false; stepMode = true; if (run.status === 'awaiting-approval') return looping; if (wake) wake(); else kick(); return looping; },
       stop() { stopped = true; paused = false; if (ctl) ctl.abort(); if (wake) { wake(); } if (run.status !== 'running') { run.status = 'stopped'; emit(); } },
-      approve(plan) { if (plan) run.plan = plan; run.plan.approved = true; msg('you', 'planner', 'approve', 'Plan approved' + (plan && plan.edited ? ' with your edits' : '') + ': ' + run.plan.subqs.length + ' sub-questions.'); if (run.status === 'awaiting-approval' && wake) wake(); else if (run.status !== 'running' && !paused) start(); emit(); },
+      approve(plan) { if (plan) run.plan = plan; run.plan.approved = true; msg('you', 'planner', 'approve', 'Plan approved' + (plan && plan.edited ? ' with your edits' : '') + ': ' + run.plan.subqs.length + ' sub-questions.'); paused = false; stepMode = false; if (wake) wake(); else if (run.status !== 'running') { kick(); } emit(); },
       /* Edits: each one drops whatever depended on the edited artifact. */
       editPlan(plan) { const old = new Map((run.plan ? run.plan.subqs : []).map((q) => [q.id, q.q])); run.plan = Object.assign({}, plan, { approved: plan.approved !== false && !!(run.plan && run.plan.approved), edited: true }); for (const k of Object.keys(run.research)) { const q = plan.subqs.find((x) => x.id === k); if (!q || q.q !== old.get(k)) delete run.research[k]; } run.agent.researchers = {}; for (const q of plan.subqs) run.agent.researchers[q.id] = run.research[q.id] ? (run.research[q.id].abstain ? 'abstain' : 'done') : 'idle'; run.drafts = []; run.critiques = []; if (plan.subqs.every((q) => run.research[q.id])) numberNotes(); msg('you', 'planner', 'edit', 'Edited the plan (' + plan.subqs.length + ' sub-questions). Research for changed questions and all drafts were reset.'); if (run.status === 'done') run.status = 'paused'; emit(); },
       editNotes(subqId, notes) { run.research[subqId] = Object.assign({}, run.research[subqId], { notes, abstain: !notes.length, status: 'done', edited: true }); numberNotes(); run.drafts = []; run.critiques = []; run.agent.writer = 'idle'; run.agent.critic = 'idle'; msg('you', 'researcher:' + subqId, 'edit', 'Edited the notes (' + notes.length + ' left). Drafts were reset so the writer uses them.'); if (run.status === 'done') run.status = 'paused'; emit(); },
