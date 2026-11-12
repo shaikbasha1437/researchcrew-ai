@@ -73,7 +73,8 @@
     }
     return out;
   }
-  function fmtVals(vs, u) { return vs.map((v) => (u.charAt(0) === '$' ? '$' + v + (u.length > 1 ? ' ' + u.slice(1) : '') : v + (u === '%' ? '%' : ' ' + u))).join(', '); }
+  const UNIT_SHOW = { 'wh/kg': 'Wh/kg', kwh: 'kWh', mwh: 'MWh', gwh: 'GWh' };
+  function fmtVals(vs, u) { const num = (v) => (Math.abs(v) >= 1000 ? v.toLocaleString('en-US') : String(v)); const pl = (unit, v) => (UNIT_SHOW[unit] || (unit && Math.abs(v) !== 1 && !/million|billion|thousand/.test(unit) ? unit + 's' : unit)); return vs.map((v) => (u.charAt(0) === '$' ? '$' + num(v) + (u.length > 1 ? ' ' + u.slice(1) : '') : num(v) + (u === '%' ? '%' : u ? ' ' + pl(u, v) : ''))).join(', '); }
   const LENGTH = { short: [100, 380], medium: [220, 700], long: [380, 1300] };
   const YEAR_MS = 365.25 * 864e5;
   function outdated(src, newestMs) { const t = Date.parse(src && src.date); return !isNaN(t) && newestMs - t > 3 * YEAR_MS; }
