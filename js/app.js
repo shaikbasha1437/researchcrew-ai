@@ -490,5 +490,5 @@
     document.documentElement.dataset.ready = '1';
   }
   boot();
-  window.ResearchCrewApp = { get engine() { return engine; }, get run() { return engine && engine.run; }, get settings() { return settings; }, get sources() { return userSources; }, get runs() { return runs; }, srcMapFor };
+  window.ResearchCrewApp = { get modal() { return modal && modal.name; }, get engine() { return engine; }, get run() { return engine && engine.run; }, get settings() { return settings; }, get sources() { return userSources; }, get runs() { return runs; }, srcMapFor };
 })();
