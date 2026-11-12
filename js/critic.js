@@ -10,7 +10,7 @@
   'use strict';
   const CITE_RE = /\[(\d+(?:\s*[,\u2013-]\s*\d+)*)\]/g;
   const META_RE = /not enough evidence|none of the (?:available |searched )?sources|no source (?:in|covers|addresses)|sources disagree|the sources (?:do not|don't)|this (?:report|brief|summary) (?:is|draws|uses|covers)|treat (?:it|this|them) with caution|could not find|insufficient evidence/i;
-  const CLAIM_RE = /\b(increased?|decreased?|rose|fell|grew|dropped|reduced|cut|improved|worsened|caused|proves?|proved|success(?:ful)?|failed|safest|always|never|eliminated|doubled|tripled|halved|confirms?|shows?|leads? to|resulted in|higher|lower|more than|less than|obsolete)\b/i;
+  const CLAIM_RE = /\b(increased?|decreased?|rose|fell|grew|dropped|reduced|cut|improved|worsened|caused|proves?|proved|success(?:ful)?|failed|safest|always|never|eliminated|doubled|tripled|halved|confirms?|shows?|leads? to|resulted in|higher|lower|more than|less than|obsolete|twice|became|best|worst|guarantee[sd]?)\b/i;
   function citesIn(s) { const out = []; let m; CITE_RE.lastIndex = 0; while ((m = CITE_RE.exec(s))) { for (const part of m[1].split(/\s*,\s*/)) { const r = part.split(/\s*[\u2013-]\s*/).map(Number); if (r.length === 2 && r[1] >= r[0] && r[1] - r[0] < 20) { for (let i = r[0]; i <= r[1]; i++) out.push(i); } else out.push(r[0]); } } return Array.from(new Set(out)); }
   function stripMd(s) { return String(s).replace(/\*\*|__|`/g, '').replace(/^\s*[-*>]\s+/, '').replace(/^\s*\d+\.\s+/, ''); }
   function quoteInSource(note, src) { return !!(src && note && note.quote && T.norm(src.text).indexOf(T.norm(note.quote)) >= 0); }

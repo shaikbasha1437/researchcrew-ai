@@ -73,3 +73,11 @@ test('resume right after stop restarts once the stopped step has unwound', async
   const eng = mk({ autoApprove: true }, { delays: { planner: 5, researcher: 30, writer: 30, critic: 30 } }); eng.start(); await until(eng, (r) => r.step === 'research' || Object.keys(r.research).length > 0);
   eng.stop(); eng.resume(); await until(eng, (r) => r.status === 'done', 8000); assert.ok(eng.run.critiques[eng.run.critiques.length - 1].pass);
 });
+test('a hand-edited draft with an unsupported claim is flagged by the critic and fixed by the writer, still bounded', async () => {
+  const eng = mk({ autoApprove: true }); await eng.start(); const n0 = eng.run.critiques.length;
+  eng.editDraft(eng.run.drafts[eng.run.drafts.length - 1].text.replace('## ', 'Every employee became twice as happy overnight.\n\n## '));
+  await eng.resume(); const r = eng.run; const ed = r.drafts.find((d) => d.edited);
+  const c = r.critiques.find((x) => x.draft === ed.round); assert.ok(c && c.issues.some((i) => i.type === 'unsupported'));
+  assert.ok(!/twice as happy/.test(r.drafts[r.drafts.length - 1].text)); assert.strictEqual(r.status, 'done');
+  assert.ok(r.critiques.length - n0 <= 3);
+});

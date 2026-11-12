@@ -35,6 +35,8 @@
       return { tokens: (u ? u.input + u.output : T.estTokens(inText) + T.estTokens(outText)), cost: (r && r.cost) || 0 };
     }
     async function timed(agent, fn) { const a = Date.now(); const r = await fn(); r.ms = r.ms || Date.now() - a; return r; }
+    /* rounds are bounded by maxRounds; a draft you edit by hand starts a fresh (still bounded) budget */
+    function roundsUsed() { const ed = run.drafts.filter((d) => d.edited).map((d) => d.round); const since = ed.length ? Math.max.apply(null, ed) : 0; return run.critiques.filter((c) => c.draft >= since).length; }
     function next() {
       if (!run.plan) return 'plan';
       if (!run.plan.approved) return 'approve';
@@ -42,7 +44,7 @@
       if (!run.drafts.length) return 'write';
       const last = run.drafts[run.drafts.length - 1]; const crit = run.critiques.find((c) => c.draft === last.round);
       if (!crit) return 'critique';
-      if (crit.pass || run.critiques.length >= run.maxRounds) return 'done';
+      if (crit.pass || roundsUsed() >= run.maxRounds) return 'done';
       return 'revise';
     }
     function numberNotes() {
